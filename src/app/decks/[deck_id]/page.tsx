@@ -354,7 +354,16 @@ export default function DeckDetailPage() {
         Back to Decks
       </Button>
       
-      <h1 className="text-2xl font-bold mb-6">{deck.name}</h1>
+      <div className="flex justify-between items-center mb-6">
+        <h1 className="text-2xl font-bold">{deck.name}</h1>
+        <Button 
+          onClick={() => router.push(`/practice/${deckId}`)} 
+          size="lg" 
+          className="bg-primary hover:bg-primary/90 text-primary-foreground font-bold text-lg px-8 py-6"
+        >
+          Practice Now
+        </Button>
+      </div>
       
       <div className="p-6 bg-card rounded-lg border shadow-sm mb-6">
         <div className="space-y-4">
