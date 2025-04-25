@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
-import { ArrowRight, Loader2 } from "lucide-react";
+import { ArrowRight, Loader2, Copy, Check } from "lucide-react";
 import { useRouter } from "next/navigation";
 
 // Define types for the breakdown result
@@ -64,6 +64,12 @@ interface BreakdownResult {
       type: "main" | "subordinate" | "relative" | "quotative";
       function: string;
       token_range: number[];
+      local_translation: string;
+      mood: string;
+      polarity: string;
+      subject: string;
+      time_reference: string;
+      discourse_function: string;
     }[];
   };
   notes?: {
@@ -135,6 +141,7 @@ export default function BreakdownPage() {
   const [breakdownResult, setBreakdownResult] = useState<BreakdownResult | null>(null);
   const [selectedModel, setSelectedModel] = useState("");
   const [error, setError] = useState("");
+  const [hasCopied, setHasCopied] = useState(false);
   const router = useRouter();
 
   useEffect(() => {
@@ -187,7 +194,6 @@ export default function BreakdownPage() {
               temperature: 0.2,
               topK: 40,
               topP: 0.95,
-              maxOutputTokens: 8192,
             },
           }),
         }
@@ -386,7 +392,13 @@ Please format your response as a valid JSON object according to this schema:
                 "type": "array",
                 "items": { "type": "integer" },
                 "description": "Start and end indices of tokens in this clause"
-              }
+              },
+              "local_translation": { "type": "string", "description": "English translation of just this clause" },
+              "mood": { "type": "string", "enum": ["declarative", "interrogative", "imperative", "subjunctive", "conditional"], "description": "Grammatical mood of the clause" },
+              "polarity": { "type": "string", "enum": ["positive", "negative", "neutral"], "description": "Whether the clause is affirmative or negative" },
+              "subject": { "type": "string", "description": "The subject of this clause (which might be omitted in Japanese)" },
+              "time_reference": { "type": "string", "enum": ["present", "past", "future", "habitual", "timeless"], "description": "When the action in this clause occurs" },
+              "discourse_function": { "type": "string", "description": "How this clause connects to the overall discourse (introduces topic, gives reason, states condition, etc.)" }
             }
           }
         }
@@ -415,12 +427,243 @@ Please format your response as a valid JSON object according to this schema:
   },
   "required": ["original", "translation", "tokens"]
 }
+Here's an example of the JSON object you should return:
+{
+  "original": "この書類に記入していただけますか？",
+  "translation": "Could you please fill out this form?",
+  "transliteration": "Kono shorui ni kinyū shite itadakemasu ka?",
+  "sentence_type": "request",
+  "tokens": [
+    {
+      "surface": "この",
+      "base": "この",
+      "reading": "この",
+      "romaji": "kono",
+      "part_of_speech": {
+        "primary": "determiner",
+        "secondary": "demonstrative"
+      },
+      "meaning": {
+        "primary": "this"
+      },
+      "formality": "neutral",
+      "polarity": "neutral",
+      "functions": ["modifier"]
+    },
+    {
+      "surface": "書類",
+      "base": "書類",
+      "reading": "しょるい",
+      "romaji": "shorui",
+      "part_of_speech": {
+        "primary": "noun",
+        "secondary": "common"
+      },
+      "meaning": {
+        "primary": "document",
+        "alternative": ["form", "paperwork"]
+      },
+      "formality": "neutral",
+      "polarity": "neutral",
+      "analysis": [
+        {
+          "morpheme": "書",
+          "base": "書",
+          "reading": "しょ",
+          "romaji": "sho",
+          "part_of_speech": "noun prefix",
+          "meaning": "writing",
+          "etymology": {
+            "origin": "sino-japanese",
+            "source": "書 (shū)"
+          }
+        },
+        {
+          "morpheme": "類",
+          "base": "類",
+          "reading": "るい",
+          "romaji": "rui",
+          "part_of_speech": "noun suffix",
+          "meaning": "type, category",
+          "etymology": {
+            "origin": "sino-japanese",
+            "source": "類 (rui)"
+          }
+        }
+      ],
+      "functions": ["direct_object"]
+    },
+    {
+      "surface": "に",
+      "base": "に",
+      "reading": "に",
+      "romaji": "ni",
+      "part_of_speech": {
+        "primary": "particle",
+        "secondary": "case"
+      },
+      "meaning": {
+        "primary": "to, in"
+      },
+      "formality": "neutral",
+      "polarity": "neutral",
+      "functions": ["adverbial"]
+    },
+    {
+      "surface": "記入して",
+      "base": "記入する",
+      "reading": "きにゅうして",
+      "romaji": "kinyū shite",
+      "part_of_speech": {
+        "primary": "verb",
+        "secondary": "suru-verb",
+        "tertiary": "te-form"
+      },
+      "meaning": {
+        "primary": "fill out"
+      },
+      "formality": "neutral",
+      "polarity": "positive",
+      "conjugation_type": "suru-verb",
+      "conjugation_form": "te-form",
+      "analysis": [
+        {
+          "morpheme": "記入",
+          "base": "記入",
+          "reading": "きにゅう",
+          "romaji": "kinyū",
+          "part_of_speech": "noun",
+          "meaning": "entry, filling in",
+          "etymology": {
+            "origin": "sino-japanese"
+          }
+        },
+        {
+          "morpheme": "して",
+          "base": "する",
+          "reading": "して",
+          "romaji": "shite",
+          "part_of_speech": "verb auxiliary",
+          "meaning": "to do (te-form)"
+        }
+      ],
+      "functions": ["predicate"]
+    },
+    {
+      "surface": "いただけます",
+      "base": "いただける",
+      "reading": "いただけます",
+      "romaji": "itadakemasu",
+      "part_of_speech": {
+        "primary": "auxiliary verb",
+        "secondary": "polite potential"
+      },
+      "meaning": {
+        "primary": "can receive (humble)",
+        "alternative": ["could you please", "would you mind"]
+      },
+      "formality": "polite",
+      "polarity": "positive",
+      "tense": "non-past",
+      "aspect": "simple",
+      "voice": "humble",
+      "conjugation_type": "potential humble auxiliary",
+      "conjugation_form": "polite (masu) form",
+      "analysis": [
+        {
+          "morpheme": "いただ",
+          "base": "いただく",
+          "reading": "いただ",
+          "romaji": "itada",
+          "part_of_speech": "verb stem",
+          "meaning": "to receive (humble)"
+        },
+        {
+          "morpheme": "け",
+          "base": "ける",
+          "reading": "け",
+          "romaji": "ke",
+          "part_of_speech": "potential suffix",
+          "meaning": "can, able to"
+        },
+        {
+          "morpheme": "ます",
+          "base": "ます",
+          "reading": "ます",
+          "romaji": "masu",
+          "part_of_speech": "auxiliary suffix",
+          "meaning": "polite ending"
+        }
+      ],
+      "functions": ["auxiliary"]
+    },
+    {
+      "surface": "か",
+      "base": "か",
+      "reading": "か",
+      "romaji": "ka",
+      "part_of_speech": {
+        "primary": "particle",
+        "secondary": "question"
+      },
+      "meaning": {
+        "primary": "question marker"
+      },
+      "formality": "neutral",
+      "polarity": "neutral",
+      "functions": ["auxiliary"]
+    }
+  ],
+  "grammar_points": [
+    {
+      "pattern": "～ていただけますか",
+      "description": "Polite request pattern using the potential form of the humble verb 'itadaku'",
+      "jlpt_level": "N4",
+      "tokens_involved": [3, 4, 5]
+    }
+  ],
+  "structure": {
+    "clauses": [
+      {
+        "type": "main",
+        "function": "request",
+        "token_range": [0, 5],
+        "local_translation": "Could you please fill out this form?",
+        "mood": "declarative",
+        "polarity": "neutral",
+        "subject": "you",
+        "time_reference": "present",
+        "discourse_function": "request"
+      }
+    ]
+  },
+  "notes": {
+    "register": "polite business",
+    "tone": "respectful, considerate",
+    "nuance": "Softens the request with humble language and potential form",
+    "context": "Service encounters, office setting, or formal requests",
+    "gender_association": "neutral",
+    "cultural_references": [
+      "Japanese keigo (honorific language) system",
+      "Business etiquette emphasizing politeness"
+    ]
+  }
+}
 
 Japanese Text to analyze:
 ${text}
 
 Return ONLY the JSON object without any extra text or explanation.
 `;
+  };
+
+  // Function to copy JSON result to clipboard
+  const copyJsonToClipboard = () => {
+    if (breakdownResult) {
+      navigator.clipboard.writeText(JSON.stringify(breakdownResult, null, 2));
+      setHasCopied(true);
+      setTimeout(() => setHasCopied(false), 2000);
+    }
   };
 
   // Function to render the breakdown result
@@ -522,6 +765,39 @@ Return ONLY the JSON object without any extra text or explanation.
                             </div>
                           );
                         })}
+                      </div>
+                      
+                      {/* Display local translation */}
+                      {clause.local_translation && (
+                        <div className="mt-3 p-2 bg-white/30 dark:bg-gray-900/30 rounded-md w-full text-center text-sm border border-slate-200 dark:border-slate-700">
+                          <span className="font-medium">Translation:</span> {clause.local_translation}
+                        </div>
+                      )}
+                      
+                      {/* Clause hover details */}
+                      <div className="absolute bottom-0 right-1 cursor-help group">
+                        <div className="text-xs font-medium bg-primary/20 text-primary-foreground px-1.5 py-0.5 rounded-full">
+                          i
+                        </div>
+                        <div className="absolute bottom-full right-0 mb-2 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-opacity duration-200 bg-card p-3 rounded-md shadow-lg border z-10 min-w-56 max-w-72">
+                          <div className="grid gap-1 text-sm">
+                            {clause.mood && (
+                              <div><span className="font-semibold">Mood:</span> {clause.mood}</div>
+                            )}
+                            {clause.polarity && (
+                              <div><span className="font-semibold">Polarity:</span> {clause.polarity}</div>
+                            )}
+                            {clause.subject && (
+                              <div><span className="font-semibold">Subject:</span> {clause.subject}</div>
+                            )}
+                            {clause.time_reference && (
+                              <div><span className="font-semibold">Time Reference:</span> {clause.time_reference}</div>
+                            )}
+                            {clause.discourse_function && (
+                              <div><span className="font-semibold">Discourse Function:</span> {clause.discourse_function}</div>
+                            )}
+                          </div>
+                        </div>
                       </div>
                     </div>
                   );
@@ -811,7 +1087,27 @@ Return ONLY the JSON object without any extra text or explanation.
           
           {breakdownResult && (
             <div className="p-6 bg-card rounded-lg border shadow-sm">
-              <h2 className="text-xl font-semibold mb-3">Breakdown Result</h2>
+              <div className="flex justify-between items-center mb-3">
+                <h2 className="text-xl font-semibold">Breakdown Result</h2>
+                <Button 
+                  onClick={copyJsonToClipboard}
+                  variant="outline" 
+                  size="sm"
+                  className="flex items-center gap-1"
+                >
+                  {hasCopied ? (
+                    <>
+                      <Check className="h-4 w-4" />
+                      Copied!
+                    </>
+                  ) : (
+                    <>
+                      <Copy className="h-4 w-4" />
+                      Copy JSON
+                    </>
+                  )}
+                </Button>
+              </div>
               {renderBreakdownResult()}
             </div>
           )}
