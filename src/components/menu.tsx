@@ -3,6 +3,7 @@
 import * as React from "react";
 import { Moon, Sun } from "lucide-react";
 import { useTheme } from "next-themes";
+import Link from "next/link";
 
 import { Button } from "@/components/ui/button";
 
@@ -23,36 +24,36 @@ export default function Menu() {
       <div className="container flex h-14 items-center justify-between">
         <ul className="flex items-center gap-6">
           <li>
-            <a
+            <Link
               href="/"
               className="text-sm font-medium transition-colors hover:text-primary"
             >
               Home
-            </a>
+            </Link>
           </li>
           <li>
-            <a
+            <Link
               href="/decks"
               className="text-sm font-medium transition-colors hover:text-primary"
             >
               Decks
-            </a>
+            </Link>
           </li>
           <li>
-            <a
+            <Link
             href="/breakdown"
             className="text-sm font-medium transition-colors hover:text-primary"
             >
               Breakdown
-            </a>
+            </Link>
           </li>
           <li>
-            <a
+            <Link
               href="/settings"
               className="text-sm font-medium transition-colors hover:text-primary"
             >
               Settings
-            </a>
+            </Link>
           </li>
         </ul>
         

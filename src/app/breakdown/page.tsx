@@ -209,7 +209,7 @@ export default function BreakdownPage() {
       const textResponse = data.candidates[0]?.content?.parts[0]?.text || "";
       
       // Extract JSON from the response
-      let jsonMatch = textResponse.match(/```json\n([\s\S]*?)\n```/) || 
+      const jsonMatch = textResponse.match(/```json\n([\s\S]*?)\n```/) || 
                      textResponse.match(/{[\s\S]*}/);
                      
       let parsedResult: BreakdownResult;
