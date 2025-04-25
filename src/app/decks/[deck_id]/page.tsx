@@ -40,9 +40,52 @@ const fieldLabels: Record<string, string> = {
   due_at: "Due At",
   alt_sids: "Alt Spelling IDs",
   alt_spellings: "Alt Spellings",
-  part_of_speech: "Part of Speech",
-  meanings_part_of_speech: "Meanings Part of Speech",
+  part_of_speech: "Type",
+  meanings_part_of_speech: "Meanings Type",
   meanings_chunks: "Meanings Chunks"
+};
+
+// Type mapping
+const posLabels: Record<string, string> = {
+  "adj-i": "い-Adjective",
+  "adj-na": "な-Adjective",
+  "adj-no": "の-Adjective",
+  "adj-pn": "Pre-noun Adjective",
+  "adv": "Adverb",
+  "aux-adj": "Auxiliary Adjective",
+  "aux-v": "Auxiliary Verb",
+  "conj": "Conjunction",
+  "cop": "Copula",
+  "ctr": "Counter",
+  "exp": "Expression",
+  "int": "Interjection",
+  "n": "Noun",
+  "num": "Numeral",
+  "pn": "Pronoun",
+  "pref": "Prefix",
+  "prt": "Particle",
+  "suf": "Suffix",
+  "v1": "Ichidan Verb (一段動詞)",
+  "v1-s": "Ichidan Verb Special (一段動詞)",
+  "v5": "Godan Verb (五段動詞)",
+  "v5aru": "Godan Verb ある Special",
+  "v5b": "Godan Verb ぶ Ending",
+  "v5g": "Godan Verb ぐ Ending",
+  "v5k": "Godan Verb く Ending",
+  "v5k-s": "Godan Verb く Special",
+  "v5m": "Godan Verb む Ending",
+  "v5n": "Godan Verb ぬ Ending",
+  "v5r": "Godan Verb る Ending",
+  "v5r-i": "Godan Verb る Irregular",
+  "v5s": "Godan Verb す Ending",
+  "v5t": "Godan Verb つ Ending",
+  "v5u": "Godan Verb う Ending",
+  "v5u-s": "Godan Verb う Special",
+  "va": "Adjectival Verb",
+  "vi": "Intransitive Verb (自動詞)",
+  "vk": "来る Verb",
+  "vs": "する Verb",
+  "vt": "Transitive Verb (他動詞)"
 };
 
 export default function DeckDetailPage() {
@@ -273,6 +316,9 @@ export default function DeckDetailPage() {
       };
       return states[value] || value;
     }
+    if (field === "part_of_speech" && Array.isArray(value)) {
+      return value.map(pos => posLabels[pos] || pos).join(", ");
+    }
     return value?.toString() || "N/A";
   };
 
@@ -473,8 +519,16 @@ export default function DeckDetailPage() {
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-2 text-sm">
                       {fieldsToFetch.map((field, fieldIndex) => {
                         // Skip primary display fields that we've already shown above
-                        // Also skip meanings_chunks
-                        if (field === "spelling" || field === "reading" || field === "meanings" || field === "meanings_chunks" || field === "card_state") {
+                        // Also skip meanings_chunks and other unneeded fields
+                        if (field === "spelling" || 
+                            field === "reading" || 
+                            field === "meanings" || 
+                            field === "meanings_chunks" || 
+                            field === "card_state" ||
+                            field === "meanings_part_of_speech" ||
+                            field === "sid" ||
+                            field === "rid" ||
+                            field === "vid") {
                           return null;
                         }
                         
