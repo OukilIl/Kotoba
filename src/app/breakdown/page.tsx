@@ -1041,48 +1041,126 @@ Return ONLY the JSON object without any extra text or explanation.
 
   if (isLoading) {
     return (
-      <div className="container mx-auto py-10">
-        <p>Loading...</p>
+      <div className="container mx-auto py-10 flex items-center justify-center min-h-[70vh]">
+        <div className="flex flex-col items-center">
+          <Loader2 className="h-10 w-10 animate-spin text-primary mb-4" />
+          <p className="text-lg font-medium">Loading...</p>
+        </div>
       </div>
     );
   }
 
   return (
     <div className="container mx-auto py-10">
-      <h1 className="text-2xl font-bold mb-6">Breakdown</h1>
+      <h1 className="text-3xl font-bold mb-8 text-center bg-gradient-to-r from-primary to-primary/70 bg-clip-text text-transparent">Text Breakdown</h1>
       
       {hasGoogleKey ? (
-        <div className="space-y-6">
-          <div className="p-6 bg-card rounded-lg border shadow-sm">
-            <p className="text-lg mb-4">Paste Japanese text to Breakdown:</p>
+        <div className="space-y-8">
+          <div className="p-8 bg-card rounded-xl border shadow-md">
+            <h2 className="text-xl font-semibold mb-6 flex items-center">
+              <span className="bg-primary/20 text-primary p-2 rounded-md mr-2">
+                <ArrowRight className="w-5 h-5" />
+              </span>
+              Japanese Text Analysis
+            </h2>
             
-            <div className="space-y-4">
+            <div className="space-y-6">
               <textarea
                 value={japaneseText}
                 onChange={(e) => setJapaneseText(e.target.value)}
                 placeholder="Enter Japanese text here..."
-                className="w-full min-h-[100px] p-3 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full min-h-[120px] p-4 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary/50 transition-all bg-background/50"
               />
               
-              <Button 
-                onClick={handleBreakdown} 
-                disabled={!japaneseText.trim() || processingBreakdown}
-                className="w-full md:w-auto"
-              >
-                {processingBreakdown ? (
-                  <>
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Processing...
-                  </>
-                ) : (
-                  "Breakdown Text"
-                )}
-              </Button>
+              <div className="flex justify-between items-center">
+                <p className="text-sm text-muted-foreground">
+                  Paste any Japanese sentence to get a detailed grammatical breakdown
+                </p>
+                <Button 
+                  onClick={handleBreakdown} 
+                  disabled={!japaneseText.trim() || processingBreakdown}
+                  className="px-6"
+                >
+                  {processingBreakdown ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      Processing...
+                    </>
+                  ) : (
+                    <>Analyze Text</>
+                  )}
+                </Button>
+              </div>
             </div>
+            
+            {!breakdownResult && (
+              <div className="mt-10 border-t pt-6">
+                <div className="flex flex-col space-y-8">
+                  <div className="text-center">
+                    <h3 className="text-lg font-medium mb-2">What You'll Get</h3>
+                    <p className="text-muted-foreground max-w-2xl mx-auto">
+                      Our AI-powered breakdown analyzes any Japanese text to provide a comprehensive 
+                      understanding of vocabulary, grammar, and nuance.
+                    </p>
+                  </div>
+                  
+                  <div className="grid md:grid-cols-3 gap-6">
+                    <div className="bg-muted/40 p-5 rounded-lg border flex flex-col items-center text-center">
+                      <div className="bg-primary/20 p-2 rounded-full mb-3">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-primary"><circle cx="12" cy="12" r="10"/><path d="M12 8v8"/><path d="M8 12h8"/></svg>
+                      </div>
+                      <h4 className="font-medium mb-2">Word Analysis</h4>
+                      <p className="text-sm text-muted-foreground">Detailed breakdown of every word including readings, meanings, and parts of speech</p>
+                    </div>
+                    
+                    <div className="bg-muted/40 p-5 rounded-lg border flex flex-col items-center text-center">
+                      <div className="bg-primary/20 p-2 rounded-full mb-3">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-primary"><path d="M9 3H5a2 2 0 0 0-2 2v4"/><path d="M9 21H5a2 2 0 0 1-2-2v-4"/><path d="M19 3h-4"/><path d="M19 21h-4"/><line x1="3" y1="9" x2="7" y2="9"/><line x1="3" y1="15" x2="7" y2="15"/><line x1="17" y1="9" x2="21" y2="9"/><line x1="17" y1="15" x2="21" y2="15"/></svg>
+                      </div>
+                      <h4 className="font-medium mb-2">Grammar Patterns</h4>
+                      <p className="text-sm text-muted-foreground">Identification of key grammar structures with JLPT levels and explanations</p>
+                    </div>
+                    
+                    <div className="bg-muted/40 p-5 rounded-lg border flex flex-col items-center text-center">
+                      <div className="bg-primary/20 p-2 rounded-full mb-3">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-primary"><path d="M8 3v3a2 2 0 0 1-2 2H3"/><path d="M21 8V5a2 2 0 0 0-2-2h-5.5"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5"/><line x1="16" y1="3" x2="16" y2="7"/><line x1="8" y1="3" x2="8" y2="7"/><line x1="3" y1="7" x2="7" y2="7"/><line x1="21" y1="12" x2="21" y2="16"/><line x1="16" y1="20" x2="16" y2="16"/><line x1="21" y1="16" x2="16" y2="16"/><line x1="7" y1="12" x2="7" y2="20"/></svg>
+                      </div>
+                      <h4 className="font-medium mb-2">Sentence Structure</h4>
+                      <p className="text-sm text-muted-foreground">Visual representation of sentence structure with clauses and grammatical functions</p>
+                    </div>
+                  </div>
+                  
+                  <div className="bg-muted/30 rounded-xl p-6 border border-dashed mt-4">
+                    <h4 className="font-medium mb-3 text-center">Example Breakdown</h4>
+                    <div className="flex flex-wrap justify-center gap-3 py-2">
+                      <div className="bg-pink-200 dark:bg-pink-800/70 border-pink-400 dark:border-pink-600 p-2 px-3 rounded border flex flex-col items-center text-center min-w-16">
+                        <div className="text-lg font-medium">私は</div>
+                        <div className="text-xs text-muted-foreground">わたしは</div>
+                      </div>
+                      <div className="bg-blue-200 dark:bg-blue-800/70 border-blue-400 dark:border-blue-600 p-2 px-3 rounded border flex flex-col items-center text-center min-w-16">
+                        <div className="text-lg font-medium">日本語を</div>
+                        <div className="text-xs text-muted-foreground">にほんごを</div>
+                      </div>
+                      <div className="bg-rose-200 dark:bg-rose-800/70 border-rose-400 dark:border-rose-600 p-2 px-3 rounded border flex flex-col items-center text-center min-w-16">
+                        <div className="text-lg font-medium">勉強して</div>
+                        <div className="text-xs text-muted-foreground">べんきょうして</div>
+                      </div>
+                      <div className="bg-purple-200 dark:bg-purple-800/70 border-purple-400 dark:border-purple-600 p-2 px-3 rounded border flex flex-col items-center text-center min-w-16">
+                        <div className="text-lg font-medium">います</div>
+                        <div className="text-xs text-muted-foreground">います</div>
+                      </div>
+                    </div>
+                    <p className="text-center mt-4 text-muted-foreground text-sm italic">
+                      "I am studying Japanese."
+                    </p>
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
           
           {error && (
-            <div className="p-4 bg-red-100 text-red-800 rounded-md">
+            <div className="p-4 bg-destructive/10 text-destructive rounded-lg border border-destructive/20">
               Error: {error}
             </div>
           )}
@@ -1115,12 +1193,53 @@ Return ONLY the JSON object without any extra text or explanation.
           )}
         </div>
       ) : (
-        <div className="p-6 bg-card rounded-lg border shadow-sm">
-          <p className="text-lg mb-4">You need to set up your Google API key to use breakdown features.</p>
-          <Button onClick={navigateToSettings} className="group">
-            Set up Google API Key
-            <ArrowRight className="ml-2 h-4 w-4 transition-transform group-hover:translate-x-1" />
-          </Button>
+        <div className="p-8 bg-card rounded-xl border shadow-md max-w-3xl mx-auto">
+          <div className="flex flex-col items-center text-center space-y-6">
+            <div className="bg-primary/20 p-4 rounded-full">
+              <svg xmlns="http://www.w3.org/2000/svg" width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-primary"><path d="M21 8v13H3V8"/><path d="M1 3h22v5H1z"/><path d="M10 12h4"/></svg>
+            </div>
+            <div>
+              <h2 className="text-2xl font-bold mb-2">API Key Required</h2>
+              <p className="text-muted-foreground mb-6 max-w-lg">
+                To use the text breakdown feature, you need to set up your Google API key. 
+                This enables our AI-powered analysis of Japanese sentences.
+              </p>
+            </div>
+            <Button onClick={navigateToSettings} className="group px-6 py-6 h-auto text-lg">
+              Set up Google API Key
+              <ArrowRight className="ml-2 h-5 w-5 transition-transform group-hover:translate-x-1" />
+            </Button>
+          </div>
+          
+          <div className="mt-10 pt-8 border-t">
+            <h3 className="text-lg font-medium mb-4 text-center">What the Breakdown Feature Offers:</h3>
+            <div className="grid md:grid-cols-2 gap-4">
+              <div className="flex items-start gap-3">
+                <div className="bg-primary/20 p-1.5 rounded mt-0.5">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-primary"><polyline points="20 6 9 17 4 12"/></svg>
+                </div>
+                <p className="text-sm">Complete morphological analysis of every word and particle</p>
+              </div>
+              <div className="flex items-start gap-3">
+                <div className="bg-primary/20 p-1.5 rounded mt-0.5">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-primary"><polyline points="20 6 9 17 4 12"/></svg>
+                </div>
+                <p className="text-sm">Visual breakdown of sentence structure and grammar</p>
+              </div>
+              <div className="flex items-start gap-3">
+                <div className="bg-primary/20 p-1.5 rounded mt-0.5">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-primary"><polyline points="20 6 9 17 4 12"/></svg>
+                </div>
+                <p className="text-sm">Identification of JLPT grammar points with explanations</p>
+              </div>
+              <div className="flex items-start gap-3">
+                <div className="bg-primary/20 p-1.5 rounded mt-0.5">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-primary"><polyline points="20 6 9 17 4 12"/></svg>
+                </div>
+                <p className="text-sm">Cultural notes and nuance explanations for accurate understanding</p>
+              </div>
+            </div>
+          </div>
         </div>
       )}
     </div>
