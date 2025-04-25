@@ -308,9 +308,17 @@ export default function PracticePage() {
   
   // Update count for a specific category
   const updateCategoryCount = (category: string, count: number) => {
+    // Check if this category has any selected types
+    const hasSelectedTypes = POS_CATEGORIES.find(c => c.name === category)?.types.some(
+      type => selectedTypes.includes(type)
+    ) || false;
+    
+    // If category has selected types, enforce a minimum of 1
+    const minCount = hasSelectedTypes ? 1 : 0;
+    
     setWordCountByCategory(prev => ({
       ...prev,
-      [category]: Math.max(0, count) // Ensure count is not negative
+      [category]: Math.max(minCount, count) // Ensure count respects minimum
     }));
   };
 
@@ -354,14 +362,78 @@ export default function PracticePage() {
   // Handle type selection
   const toggleType = (type: string) => {
     setSelectedTypes(prev => {
+      let newSelectedTypes;
       if (prev.includes(type)) {
         // Remove type
-        return prev.filter(t => t !== type);
+        newSelectedTypes = prev.filter(t => t !== type);
       } else {
         // Add type
-        return [...prev, type];
+        newSelectedTypes = [...prev, type];
       }
+      
+      // Find which category this type belongs to
+      for (const category of POS_CATEGORIES) {
+        if (category.types.includes(type)) {
+          // Check if this was the first type selected in this category
+          const wasEmpty = !category.types.some(t => prev.includes(t));
+          const isEmpty = !category.types.some(t => newSelectedTypes.includes(t));
+          
+          // If we're adding the first type in this category, set count to 1
+          if (wasEmpty && !isEmpty) {
+            updateCategoryCount(category.name, 1);
+          }
+          
+          // If we're removing the last type in this category, allow count to be 0
+          if (!wasEmpty && isEmpty) {
+            setWordCountByCategory(prev => ({
+              ...prev,
+              [category.name]: 0
+            }));
+          }
+          
+          break;
+        }
+      }
+      
+      return newSelectedTypes;
     });
+  };
+
+  // Handle category checkbox change
+  const handleCategoryCheckboxChange = (category: string) => {
+    const isPartial = isCategoryPartiallySelected(category);
+    const isFull = isCategoryFullySelected(category);
+    
+    const categoryData = POS_CATEGORIES.find(c => c.name === category);
+    if (!categoryData) return;
+    
+    if (isPartial || !isFull) {
+      // Select all types in this category
+      setSelectedTypes(prev => {
+        const currentTypes = new Set(prev);
+        categoryData.types.forEach(type => currentTypes.add(type));
+        return Array.from(currentTypes);
+      });
+      
+      // Make sure the category is selected too
+      if (!selectedCategories.includes(category)) {
+        setSelectedCategories(prev => [...prev, category]);
+      }
+      
+      // Set count to 1 when selecting this category
+      updateCategoryCount(category, 1);
+    } else {
+      // Deselect all types in this category
+      setSelectedTypes(prev => 
+        prev.filter(type => !categoryData.types.includes(type))
+      );
+      
+      // Remove the category selection too
+      setSelectedCategories(prev => prev.filter(c => c !== category));
+      
+      // Reset the count to 0 for this category
+      updateCategoryCount(category, 0);
+    }
   };
 
   // Start practice with current settings
@@ -385,40 +457,6 @@ export default function PracticePage() {
     
     const hasSelected = categoryData.types.some(type => selectedTypes.includes(type));
     return hasSelected && !isCategoryFullySelected(category);
-  };
-
-  // Handle category checkbox change
-  const handleCategoryCheckboxChange = (category: string) => {
-    const isPartial = isCategoryPartiallySelected(category);
-    const isFull = isCategoryFullySelected(category);
-    
-    const categoryData = POS_CATEGORIES.find(c => c.name === category);
-    if (!categoryData) return;
-    
-    if (isPartial || !isFull) {
-      // Select all types in this category
-      setSelectedTypes(prev => {
-        const currentTypes = new Set(prev);
-        categoryData.types.forEach(type => currentTypes.add(type));
-        return Array.from(currentTypes);
-      });
-      
-      // Make sure the category is selected too
-      if (!selectedCategories.includes(category)) {
-        setSelectedCategories(prev => [...prev, category]);
-      }
-    } else {
-      // Deselect all types in this category
-      setSelectedTypes(prev => 
-        prev.filter(type => !categoryData.types.includes(type))
-      );
-      
-      // Remove the category selection too
-      setSelectedCategories(prev => prev.filter(c => c !== category));
-      
-      // Reset the count to 0 for this category
-      updateCategoryCount(category, 0);
-    }
   };
 
   // Toggle category expansion
@@ -536,14 +574,14 @@ export default function PracticePage() {
                                 size="icon"
                                 className="h-7 w-7"
                                 onClick={() => updateCategoryCount(category.name, wordCountByCategory[category.name] - 1)}
-                                disabled={wordCountByCategory[category.name] <= 0 || !selectedTypes.some(type => category.types.includes(type))}
+                                disabled={wordCountByCategory[category.name] <= 1 || !selectedTypes.some(type => category.types.includes(type))}
                               >
                                 -
                               </Button>
                               <Input
                                 id={`count-${category.name}`}
                                 type="number"
-                                min="0"
+                                min={selectedTypes.some(type => category.types.includes(type)) ? 1 : 0}
                                 max="10"
                                 className="w-12 h-7 text-center"
                                 value={wordCountByCategory[category.name]}
