@@ -240,6 +240,15 @@ export default function PracticePage() {
 
     let filtered = [...vocabularyDetails];
     
+    // Filter for only "known" words
+    filtered = filtered.filter(vocab => {
+      const cardState = vocab[FIELD_INDICES.card_state];
+      // Check if the card state includes "known"
+      return Array.isArray(cardState) && cardState.some(state => 
+        typeof state === 'string' && state.toLowerCase() === 'known'
+      );
+    });
+    
     // Apply part of speech filters if any are selected
     if (selectedTypes.length > 0) {
       filtered = filtered.filter(vocab => {
