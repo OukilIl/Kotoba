@@ -650,6 +650,8 @@ Here's an example of the JSON object you should return:
   }
 }
 
+Make sure to include all tokens in structures/clauses don't skip any, meaning you shouldn't skip numbers when giving the token range.
+
 Japanese Text to analyze:
 ${text}
 

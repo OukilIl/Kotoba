@@ -40,18 +40,18 @@ export default function Menu() {
           </li>
           <li>
             <a
-              href="/settings"
-              className="text-sm font-medium transition-colors hover:text-primary"
-            >
-              Settings
-            </a>
-          </li>
-          <li>
-            <a
             href="/breakdown"
             className="text-sm font-medium transition-colors hover:text-primary"
             >
               Breakdown
+            </a>
+          </li>
+          <li>
+            <a
+              href="/settings"
+              className="text-sm font-medium transition-colors hover:text-primary"
+            >
+              Settings
             </a>
           </li>
         </ul>
