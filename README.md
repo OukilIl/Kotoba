@@ -65,7 +65,7 @@ This project is built with:
 - [Tailwind CSS](https://tailwindcss.com/) - For styling
 - [Shadcn UI](https://ui.shadcn.com/) - Component library
 - [Google Gemini API](https://ai.google.dev/) - For text analysis
-- [JPDB API](https://jpdb.io/api-docs) - For vocabulary management
+- [JPDB API](https://jpdb.stoplight.io/docs/jpdb/mgsimhgxpjpqe-jpdb-io-public-api) - For vocabulary management
 
 ## 🤝 Contributing
 
