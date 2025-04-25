@@ -10,8 +10,11 @@ import { toast } from "sonner";
 type Deck = {
   id: string;
   name: string;
-  description: string;
-  cards_count: number;
+  vocabulary_count: number;
+  word_count: number;
+  vocabulary_known_coverage: number;
+  vocabulary_in_progress_coverage: number;
+  is_built_in: boolean;
 };
 
 export default function DecksPage() {
@@ -74,7 +77,15 @@ export default function DecksPage() {
           "Accept": "application/json"
         },
         body: JSON.stringify({
-          fields: ["id", "name", "vocabulary_count", "is_built_in"]
+          fields: [
+            "id", 
+            "name", 
+            "vocabulary_count", 
+            "word_count", 
+            "vocabulary_known_coverage", 
+            "vocabulary_in_progress_coverage", 
+            "is_built_in"
+          ]
         })
       });
       
@@ -96,8 +107,11 @@ export default function DecksPage() {
           return {
             id: deckData[0],
             name: deckData[1],
-            cards_count: deckData[2] || 0,
-            description: deckData[3] === true ? "Built-in deck" : "Custom deck"
+            vocabulary_count: deckData[2] || 0,
+            word_count: deckData[3] || 0,
+            vocabulary_known_coverage: deckData[4] || 0,
+            vocabulary_in_progress_coverage: deckData[5] || 0,
+            is_built_in: deckData[6] || false
           };
         });
         
@@ -124,6 +138,7 @@ export default function DecksPage() {
     }
   };
 
+  // Display loading state while fetching
   if (isLoading) {
     return (
       <div className="container mx-auto py-10 flex items-center justify-center min-h-[70vh]">
@@ -134,6 +149,11 @@ export default function DecksPage() {
       </div>
     );
   }
+
+  // Format the percentage without multiplying by 100 (data comes as raw percentages)
+  const formatPercentage = (value: number) => {
+    return `${value.toFixed(2)}%`;
+  };
 
   return (
     <div className="container mx-auto py-10">
@@ -165,18 +185,46 @@ export default function DecksPage() {
       {hasJpdbKey ? (
         <>
           {decks.length > 0 ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {decks.map((deck) => (
+            <div className="flex flex-col space-y-4">
+              {decks.map((deck, index) => (
                 <div 
                   key={deck.id} 
                   className="p-6 bg-card rounded-lg border shadow-sm hover:shadow-md transition-shadow"
                 >
-                  <h2 className="text-xl font-medium mb-2">{deck.name}</h2>
-                  <p className="text-sm text-muted-foreground mb-4">
-                    {deck.description || "No description available"}
-                  </p>
-                  <div className="text-sm font-medium">
-                    Cards: {deck.cards_count}
+                  <div className="flex items-center justify-between mb-4">
+                    <h2 className="text-lg font-medium">
+                      {index + 1}. {deck.name} {deck.vocabulary_count >= 1000 
+                        ? `${(deck.vocabulary_count / 1000).toFixed(1)}k` 
+                        : deck.vocabulary_count}
+                    </h2>
+                  </div>
+                  
+                  <div className="space-y-3">
+                    <div>
+                      <p className="text-sm mb-1">Vocabulary</p>
+                      <div className="flex justify-between text-sm mb-1">
+                        <span className="text-muted-foreground">{Math.floor(deck.vocabulary_count * deck.vocabulary_known_coverage / 100)} / {deck.vocabulary_count}</span>
+                      </div>
+                      <div className="relative h-6 bg-muted/30 rounded-md overflow-hidden">
+                        <div 
+                          className="absolute top-0 left-0 h-full bg-primary rounded-md"
+                          style={{ width: `${deck.vocabulary_known_coverage}%` }}
+                        />
+                        <div 
+                          className="absolute top-0 left-0 h-full bg-primary/30 rounded-md"
+                          style={{ 
+                            width: `${deck.vocabulary_in_progress_coverage}%`,
+                            clipPath: `polygon(${deck.vocabulary_known_coverage}% 0, 100% 0, 100% 100%, ${deck.vocabulary_known_coverage}% 100%)`
+                          }}
+                        />
+                        <div className="absolute top-0 left-0 w-full h-full flex items-center px-2">
+                          <span className="text-xs font-medium text-primary-foreground">
+                            {deck.vocabulary_known_coverage.toFixed(2)}% 
+                            (<span className="text-primary-foreground/70">+{(deck.vocabulary_in_progress_coverage - deck.vocabulary_known_coverage).toFixed(2)}%</span>)
+                          </span>
+                        </div>
+                      </div>
+                    </div>
                   </div>
                 </div>
               ))}
