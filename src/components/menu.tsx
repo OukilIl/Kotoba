@@ -15,8 +15,11 @@ export default function Menu() {
     setMounted(true);
   }, []);
 
+  // Use the same styles for both server and client rendering
+  const navStyle = "fixed top-0 left-0 right-0 z-50 bg-background/80 backdrop-blur-sm border-b px-5";
+
   return (
-    <nav className="mt-0 ml-5 mr-5       z-50 bg-background/80 backdrop-blur-sm border-b">
+    <nav className={navStyle}>
       <div className="container flex h-14 items-center justify-between">
         <ul className="flex items-center gap-6">
           <li>

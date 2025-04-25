@@ -37,7 +37,9 @@ export default function RootLayout({
           disableTransitionOnChange
         >
           <Menu />
-          {children}
+          <main className="pt-14">
+            {children}
+          </main>
           <Toaster />
         </ThemeProvider>
       </body>

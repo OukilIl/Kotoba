@@ -87,50 +87,50 @@ interface BreakdownResult {
 
 // Color mapping for parts of speech using shadcn-compatible classes with more vibrant colors
 const posColors: Record<string, string> = {
-  noun: "bg-pink-200 border-pink-400",
-  pronoun: "bg-fuchsia-200 border-fuchsia-400",
-  verb: "bg-rose-200 border-rose-400",
-  auxiliary: "bg-purple-200 border-purple-400",
-  adjective: "bg-blue-200 border-blue-400",
-  adverb: "bg-amber-200 border-amber-400",
-  determiner: "bg-yellow-200 border-yellow-400",
-  preposition: "bg-green-200 border-green-400",
-  particle: "bg-emerald-200 border-emerald-400",
-  conjunction: "bg-teal-200 border-teal-400",
-  interjection: "bg-cyan-200 border-cyan-400",
-  punctuation: "bg-gray-200 border-gray-400",
-  numeral: "bg-orange-200 border-orange-400",
-  counter: "bg-orange-200 border-orange-400",
-  suffix: "bg-indigo-200 border-indigo-400",
-  prefix: "bg-violet-200 border-violet-400",
-  expression: "bg-fuchsia-200 border-fuchsia-400",
-  "proper noun": "bg-red-200 border-red-400",
-  default: "bg-slate-200 border-slate-400"
+  noun: "bg-pink-200 dark:bg-pink-800/70 border-pink-400 dark:border-pink-600",
+  pronoun: "bg-fuchsia-200 dark:bg-fuchsia-800/70 border-fuchsia-400 dark:border-fuchsia-600",
+  verb: "bg-rose-200 dark:bg-rose-800/70 border-rose-400 dark:border-rose-600",
+  auxiliary: "bg-purple-200 dark:bg-purple-800/70 border-purple-400 dark:border-purple-600",
+  adjective: "bg-blue-200 dark:bg-blue-800/70 border-blue-400 dark:border-blue-600",
+  adverb: "bg-amber-200 dark:bg-amber-800/70 border-amber-400 dark:border-amber-600",
+  determiner: "bg-yellow-200 dark:bg-yellow-800/70 border-yellow-400 dark:border-yellow-600",
+  preposition: "bg-green-200 dark:bg-green-800/70 border-green-400 dark:border-green-600",
+  particle: "bg-emerald-200 dark:bg-emerald-800/70 border-emerald-400 dark:border-emerald-600",
+  conjunction: "bg-teal-200 dark:bg-teal-800/70 border-teal-400 dark:border-teal-600",
+  interjection: "bg-cyan-200 dark:bg-cyan-800/70 border-cyan-400 dark:border-cyan-600",
+  punctuation: "bg-gray-200 dark:bg-gray-700/70 border-gray-400 dark:border-gray-500",
+  numeral: "bg-orange-200 dark:bg-orange-800/70 border-orange-400 dark:border-orange-600",
+  counter: "bg-orange-200 dark:bg-orange-800/70 border-orange-400 dark:border-orange-600",
+  suffix: "bg-indigo-200 dark:bg-indigo-800/70 border-indigo-400 dark:border-indigo-600",
+  prefix: "bg-violet-200 dark:bg-violet-800/70 border-violet-400 dark:border-violet-600",
+  expression: "bg-fuchsia-200 dark:bg-fuchsia-800/70 border-fuchsia-400 dark:border-fuchsia-600",
+  "proper noun": "bg-red-200 dark:bg-red-800/70 border-red-400 dark:border-red-600",
+  default: "bg-slate-200 dark:bg-slate-700/70 border-slate-400 dark:border-slate-500"
 };
 
 // Define colors for clause types with more vibrant colors
 const clauseColors: Record<string, string> = {
-  main: "bg-sky-100 border-sky-400",
-  subordinate: "bg-indigo-100 border-indigo-400",
-  relative: "bg-violet-100 border-violet-400",
-  quotative: "bg-fuchsia-100 border-fuchsia-400",
-  default: "bg-slate-100 border-slate-400"
+  main: "bg-sky-100 dark:bg-sky-900/50 border-sky-400 dark:border-sky-600",
+  subordinate: "bg-indigo-100 dark:bg-indigo-900/50 border-indigo-400 dark:border-indigo-600",
+  relative: "bg-violet-100 dark:bg-violet-900/50 border-violet-400 dark:border-violet-600",
+  quotative: "bg-fuchsia-100 dark:bg-fuchsia-900/50 border-fuchsia-400 dark:border-fuchsia-600",
+  default: "bg-slate-100 dark:bg-slate-800/50 border-slate-400 dark:border-slate-600"
 };
 
 // Define colors for grammatical functions with more vibrant colors
 const functionColors: Record<string, string> = {
-  statement: "bg-blue-200",
-  question: "bg-violet-200",
-  command: "bg-rose-200",
-  request: "bg-purple-200",
-  suggestion: "bg-indigo-200",
-  wish: "bg-sky-200",
-  exclamation: "bg-amber-200",
-  condition: "bg-teal-200",
-  causative: "bg-emerald-200",
-  result: "bg-green-200",
-  reason: "bg-yellow-200",
-  default: "bg-slate-200"
+  statement: "bg-blue-200 dark:bg-blue-700/60",
+  question: "bg-violet-200 dark:bg-violet-700/60",
+  command: "bg-rose-200 dark:bg-rose-700/60",
+  request: "bg-purple-200 dark:bg-purple-700/60",
+  suggestion: "bg-indigo-200 dark:bg-indigo-700/60",
+  wish: "bg-sky-200 dark:bg-sky-700/60",
+  exclamation: "bg-amber-200 dark:bg-amber-700/60",
+  condition: "bg-teal-200 dark:bg-teal-700/60",
+  causative: "bg-emerald-200 dark:bg-emerald-700/60",
+  result: "bg-green-200 dark:bg-green-700/60",
+  reason: "bg-yellow-200 dark:bg-yellow-700/60",
+  default: "bg-slate-200 dark:bg-slate-700/60"
 };
 
 export default function BreakdownPage() {
@@ -731,7 +731,7 @@ Return ONLY the JSON object without any extra text or explanation.
                               </div>
                               
                               {/* Hover details */}
-                              <div className="absolute left-1/2 -translate-x-1/2 top-full mt-2 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-opacity duration-200 bg-card p-3 rounded-md shadow-lg border z-10 min-w-56 max-w-72">
+                              <div className="absolute left-1/2 -translate-x-1/2 top-full mt-2 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-opacity duration-200 bg-card p-3 rounded-md shadow-lg border z-10 min-w-56 max-w-72 dark:bg-gray-800 dark:border-gray-700">
                                 <div className="grid gap-1">
                                   <div><span className="font-semibold">Base:</span> {token.base}</div>
                                   <div><span className="font-semibold">Reading:</span> {token.reading}</div>
@@ -769,7 +769,7 @@ Return ONLY the JSON object without any extra text or explanation.
                       
                       {/* Display local translation */}
                       {clause.local_translation && (
-                        <div className="mt-3 p-2 bg-white/30 dark:bg-gray-900/30 rounded-md w-full text-center text-sm border border-slate-200 dark:border-slate-700">
+                        <div className="mt-3 p-2 bg-white/30 dark:bg-gray-800/40 rounded-md w-full text-center text-sm border border-slate-200 dark:border-slate-600">
                           <span className="font-medium">Translation:</span> {clause.local_translation}
                         </div>
                       )}
@@ -779,7 +779,7 @@ Return ONLY the JSON object without any extra text or explanation.
                         <div className="text-xs font-medium bg-primary/20 text-primary-foreground px-1.5 py-0.5 rounded-full">
                           i
                         </div>
-                        <div className="absolute bottom-full right-0 mb-2 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-opacity duration-200 bg-card p-3 rounded-md shadow-lg border z-10 min-w-56 max-w-72">
+                        <div className="absolute bottom-full right-0 mb-2 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-opacity duration-200 bg-card p-3 rounded-md shadow-lg border z-10 min-w-56 max-w-72 dark:bg-gray-800 dark:border-gray-700">
                           <div className="grid gap-1 text-sm">
                             {clause.mood && (
                               <div><span className="font-semibold">Mood:</span> {clause.mood}</div>
@@ -927,10 +927,10 @@ Return ONLY the JSON object without any extra text or explanation.
         return (
           <div className="mt-6 space-y-4">
             <h3 className="text-lg font-medium text-center">Grammar Patterns</h3>
-            <div className="grid gap-4 max-w-2xl mx-auto">
+            <div className="flex flex-wrap justify-center gap-4">
               {breakdownResult.grammar_points.map((point, idx) => {
                 return (
-                  <div key={idx} className="flex flex-col items-center text-center">
+                  <div key={idx} className="flex flex-col p-4 bg-card border rounded-lg shadow-sm w-full sm:w-[calc(50%-1rem)] lg:w-[calc(33.333%-1rem)]">
                     <div className="flex items-center gap-2 mb-2">
                       <div className="font-semibold text-primary">{point.pattern}</div>
                       {point.jlpt_level && (
@@ -941,7 +941,7 @@ Return ONLY the JSON object without any extra text or explanation.
                     </div>
                     
                     {point.tokens_involved && point.tokens_involved.length > 0 && (
-                      <div className="flex gap-1 justify-center mb-2">
+                      <div className="flex flex-wrap gap-1 mb-2">
                         {point.tokens_involved.map((tokenIdx) => {
                           const token = breakdownResult.tokens[tokenIdx];
                           if (!token) return null;
@@ -961,7 +961,7 @@ Return ONLY the JSON object without any extra text or explanation.
                       </div>
                     )}
                     
-                    <div className="text-sm text-muted-foreground max-w-md">
+                    <div className="text-sm text-muted-foreground mt-auto">
                       {point.description}
                     </div>
                   </div>
