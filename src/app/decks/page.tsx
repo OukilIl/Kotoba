@@ -55,6 +55,10 @@ export default function DecksPage() {
     router.push("/settings");
   };
 
+  const navigateToDeck = (deckId: string) => {
+    router.push(`/decks/${deckId}`);
+  };
+
   const fetchDecks = async () => {
     setIsFetchingDecks(true);
     
@@ -189,7 +193,8 @@ export default function DecksPage() {
               {decks.map((deck, index) => (
                 <div 
                   key={deck.id} 
-                  className="p-6 bg-card rounded-lg border shadow-sm hover:shadow-md transition-shadow"
+                  className="p-6 bg-card rounded-lg border shadow-sm hover:shadow-md transition-shadow cursor-pointer"
+                  onClick={() => navigateToDeck(deck.id)}
                 >
                   <div className="flex items-center justify-between mb-4">
                     <h2 className="text-lg font-medium">
