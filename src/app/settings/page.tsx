@@ -234,7 +234,8 @@ export default function Settings() {
             <div className="mt-4 p-4 bg-muted rounded-md">
               <h3 className="font-medium mb-2">What model do I choose?</h3>
               <p className="text-sm">
-                It all depends the degree of accuracy you want along with how much you're willing to wait. Though none of the models are actually bad per-se, the Pro models tend to be a lot more accurate and pick up nuance a lot easier, but you will have to WAIT a <i>lot</i>. And while the Flash models tend to be a little be "stupider" I think how fast they are makes up for it, so unless you're reallllly bad, just choose the latest flash model.
+                It all depends on the degree of accuracy you want and how much time you're willing to wait. While all models perform well, the Pro models tend to be more accurate and better at picking up nuance, but have longer response times. The Flash models are faster but may miss some subtleties. 
+                For most users, the latest Flash model provides a good balance of speed and accuracy.
               </p>
             </div>
           </div>
