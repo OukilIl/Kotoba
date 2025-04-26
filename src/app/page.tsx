@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
@@ -10,6 +10,11 @@ import { ArrowRight, BookOpen, Brain, Crop, Globe, Settings, Server } from "luci
 
 export default function Home() {
   const [activeTab, setActiveTab] = useState("features");
+
+  // Set page title
+  useEffect(() => {
+    document.title = "Kotoba | Japanese Learning Toolkit";
+  }, []);
 
   return (
     <div className="container mx-auto py-16 px-4 sm:px-6 lg:px-8">

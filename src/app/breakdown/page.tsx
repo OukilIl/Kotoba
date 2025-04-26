@@ -144,6 +144,11 @@ export default function BreakdownPage() {
   const [hasCopied, setHasCopied] = useState(false);
   const router = useRouter();
 
+  // Set page title
+  useEffect(() => {
+    document.title = "Text Breakdown | Kotoba";
+  }, []);
+
   useEffect(() => {
     // Check if Google API key exists in localStorage
     const savedGoogleKey = localStorage.getItem("googleApiKey");

@@ -20,6 +20,11 @@ export default function Settings() {
   const [selectedModel, setSelectedModel] = useState("");
   const [isLoadingModels, setIsLoadingModels] = useState(false);
 
+  // Set page title
+  useEffect(() => {
+    document.title = "Settings | Kotoba";
+  }, []);
+
   // Load saved keys from localStorage on component mount
   useEffect(() => {
     const savedJpdbKey = localStorage.getItem("jpdbApiKey");

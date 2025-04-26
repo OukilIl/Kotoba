@@ -322,6 +322,13 @@ export default function DeckDetailPage() {
     return value?.toString() || "N/A";
   };
 
+  // Set page title
+  useEffect(() => {
+    document.title = deck 
+      ? `${deck.name} | Deck | Kotoba` 
+      : "Deck Detail | Kotoba";
+  }, [deck]);
+
   if (loading) {
     return (
       <div className="container mx-auto py-10 flex items-center justify-center min-h-[70vh]">

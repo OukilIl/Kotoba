@@ -1029,6 +1029,13 @@ Return ONLY the JSON object without any extra text or explanation.
     );
   };
 
+  // Set page title
+  useEffect(() => {
+    document.title = deck 
+      ? `Practice: ${deck.name} | Kotoba` 
+      : "Vocabulary Practice | Kotoba";
+  }, [deck]);
+
   if (loading) {
     return (
       <div className="container mx-auto py-10 flex items-center justify-center min-h-[70vh]">

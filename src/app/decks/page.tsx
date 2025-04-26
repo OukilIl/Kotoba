@@ -51,6 +51,11 @@ export default function DecksPage() {
     setIsLoading(false);
   }, []);
 
+  // Set page title
+  useEffect(() => {
+    document.title = "Vocabulary Decks | Kotoba";
+  }, []);
+
   const navigateToSettings = () => {
     router.push("/settings");
   };
