@@ -103,6 +103,7 @@ export default function DeckDetailPage() {
     "meanings", "card_level", "card_state", "due_at", "alt_sids", 
     "alt_spellings", "part_of_speech", "meanings_part_of_speech", "meanings_chunks"
   ]);
+  const [practiceLoading, setPracticeLoading] = useState(false);
   const itemsPerPage = 50;
 
   const router = useRouter();
@@ -274,6 +275,11 @@ export default function DeckDetailPage() {
     router.push("/decks");
   };
 
+  const handlePracticeClick = () => {
+    setPracticeLoading(true);
+    router.push(`/practice/${deckId}`);
+  };
+
   // Toggle card state filter
   const toggleCardStateFilter = (state: string) => {
     setActiveCardStateFilters(prev => {
@@ -364,11 +370,17 @@ export default function DeckDetailPage() {
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-2xl font-bold">{deck.name}</h1>
         <Button 
-          onClick={() => router.push(`/practice/${deckId}`)} 
+          onClick={handlePracticeClick} 
           size="lg" 
           className="bg-primary hover:bg-primary/90 text-primary-foreground font-bold text-lg px-8 py-6"
+          disabled={practiceLoading}
         >
-          Practice Now
+          {practiceLoading ? (
+            <>
+              <Loader2 className="h-5 w-5 animate-spin mr-2" />
+              Loading...
+            </>
+          ) : "Practice Now"}
         </Button>
       </div>
       
@@ -544,6 +556,7 @@ export default function DeckDetailPage() {
                             field === "meanings_part_of_speech" ||
                             field === "sid" ||
                             field === "rid" ||
+                            field === "alt_sids" ||
                             field === "vid") {
                           return null;
                         }

@@ -60,7 +60,7 @@ export default function Menu() {
         <div className="flex items-center gap-2">
           {mounted && (
             <>
-              <Link href="https://github.com/OukilIl/Kotoba?tab=readme-ov-file" target="_blank" rel="noopener noreferrer">
+              <Link href="https://github.com/OukilIl/Kotoba" target="_blank" rel="noopener noreferrer">
                 <Button 
                   variant="ghost" 
                   size="icon"
