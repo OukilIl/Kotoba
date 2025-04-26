@@ -67,6 +67,15 @@ This project is built with:
 - [Google Gemini API](https://ai.google.dev/) - For text analysis
 - [JPDB API](https://jpdb.stoplight.io/docs/jpdb/mgsimhgxpjpqe-jpdb-io-public-api) - For vocabulary management
 
+## 🗺️ Future Plans
+
+Some features I'm considering adding:
+
+- **Image Recognition** - For Sentence Breakdown specifically
+- **Anki Integration** - Adding Anki to not be too reliant on JPDB
+- **Conversation Practice Mode** - Interactive dialogue scenarios to practice real-world Japanese conversations
+- **Mobile App Version** - I actually have no idea how it looks on mobile, and besides working on that, turning this into a mobile app as practice sounds fun
+
 ## 🤝 Contributing
 
 Contributions are welcome! Feel free to open issues or submit pull requests.
