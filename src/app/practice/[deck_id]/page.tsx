@@ -34,6 +34,49 @@ type Deck = {
 type VocabularyItem = [number, number]; // [vid, sid]
 type VocabularyInfo = any[]; // Full vocabulary item with all requested fields
 
+// Type definition for sentence evaluation
+type SentenceEvaluation = {
+  request: {
+    sentence: string;
+    required_words: string[];
+  };
+  evaluation: {
+    is_correct: boolean;
+    grade: "good" | "passing" | "failure";
+    uses_required_words: boolean;
+    score?: number;
+  };
+  language_analysis: {
+    translation: string;
+    pronunciation: string;
+    detected_issues?: {
+      issue_type: string;
+      description: string;
+      severity?: "minor" | "moderate" | "major";
+    }[];
+    required_words_usage?: {
+      word: string;
+      used_form: string;
+      correct_usage: boolean;
+      notes?: string;
+    }[];
+  };
+  feedback: {
+    summary: string;
+    specific_points?: string[];
+    grammar_explanations?: {
+      grammar_point: string;
+      explanation: string;
+      jlpt_level?: "N5" | "N4" | "N3" | "N2" | "N1";
+    }[];
+  };
+  suggestions?: {
+    improved_sentence: string;
+    translation: string;
+    explanation?: string;
+  }[];
+};
+
 // Map field indexes
 const FIELD_INDICES = {
   vid: 0,
@@ -126,6 +169,8 @@ export default function PracticePage() {
   const [showSettings, setShowSettings] = useState(true);
   const [submittedAnswer, setSubmittedAnswer] = useState('');
   const [isAnswerCorrect, setIsAnswerCorrect] = useState<boolean | null>(null);
+  const [evaluationLoading, setEvaluationLoading] = useState(false);
+  const [evaluationResult, setEvaluationResult] = useState<SentenceEvaluation | null>(null);
   
   // Practice settings
   const [wordCountByCategory, setWordCountByCategory] = useState<Record<string, number>>(
@@ -312,6 +357,7 @@ export default function PracticePage() {
     setPracticeWords(selectedWords);
     setSubmittedAnswer('');
     setIsAnswerCorrect(null);
+    setEvaluationResult(null);
     setIsReady(true);
   };
   
@@ -480,13 +526,507 @@ export default function PracticePage() {
     router.push(`/decks/${deckId}`);
   };
 
-  const handleSubmitAnswer = () => {
-    // Simple validation - we'd need more sophisticated validation in a real app
-    setIsAnswerCorrect(submittedAnswer.trim().length > 0);
+  const handleSubmitAnswer = async () => {
+    if (!submittedAnswer.trim()) return;
+    
+    setEvaluationLoading(true);
+    setIsAnswerCorrect(null);
+    setEvaluationResult(null);
+    
+    try {
+      // Get required words from practice words
+      const requiredWords = practiceWords.map(word => word[FIELD_INDICES.spelling]);
+      
+      // Get Google API key from localStorage
+      const googleApiKey = localStorage.getItem("googleApiKey");
+      if (!googleApiKey) {
+        throw new Error("Google API key not found");
+      }
+      
+      // Get selected model from localStorage or use default
+      const modelName = localStorage.getItem("selectedGeminiModel") || "models/gemini-1.5-pro";
+      
+      // Create the prompt for evaluation
+      const prompt = createEvaluationPrompt(submittedAnswer, requiredWords);
+      
+      // Make request to Gemini API
+      const response = await fetch(
+        `https://generativelanguage.googleapis.com/v1beta/${modelName}:generateContent?key=${googleApiKey}`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            contents: [
+              {
+                parts: [
+                  {
+                    text: prompt,
+                  },
+                ],
+              },
+            ],
+            generationConfig: {
+              temperature: 0.2,
+              topK: 40,
+              topP: 0.95,
+            },
+          }),
+        }
+      );
+
+      const data = await response.json();
+      
+      if (!response.ok) {
+        throw new Error(data.error?.message || "Failed to evaluate sentence");
+      }
+
+      // Parse the response to extract the JSON
+      const textResponse = data.candidates[0]?.content?.parts[0]?.text || "";
+      
+      // Extract JSON from the response
+      const jsonMatch = textResponse.match(/```json\n([\s\S]*?)\n```/) || 
+                      textResponse.match(/{[\s\S]*}/);
+                     
+      let evaluationData: SentenceEvaluation;
+      
+      if (jsonMatch) {
+        // If we found JSON in markdown format or plain format
+        const jsonString = jsonMatch[1] || jsonMatch[0];
+        evaluationData = JSON.parse(jsonString);
+      } else {
+        // Try to parse the entire response as JSON
+        try {
+          evaluationData = JSON.parse(textResponse);
+        } catch (e) {
+          // If not valid JSON, create a minimal result
+          throw new Error("Invalid response format from API");
+        }
+      }
+      
+      setEvaluationResult(evaluationData);
+      setIsAnswerCorrect(evaluationData.evaluation.uses_required_words && evaluationData.evaluation.is_correct);
+      
+    } catch (err: any) {
+      console.error("Error evaluating sentence:", err);
+      setIsAnswerCorrect(false);
+    } finally {
+      setEvaluationLoading(false);
+    }
   };
 
-  const openSettings = () => {
-    setShowSettings(true);
+  // Create a detailed prompt for the Gemini model
+  const createEvaluationPrompt = (sentence: string, requiredWords: string[]) => {
+    return `
+You are a Japanese language expert. I want you to evaluate the following Japanese sentence and provide detailed feedback, especially regarding the use of specific required vocabulary words.
+
+Please format your response as a valid JSON object according to this schema:
+
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "JapaneseSentenceEvaluation",
+  "description": "Schema for evaluating Japanese sentences using required vocabulary words",
+  "type": "object",
+  "properties": {
+    "request": {
+      "type": "object",
+      "properties": {
+        "sentence": {
+          "type": "string",
+          "description": "The Japanese sentence submitted by the user"
+        },
+        "required_words": {
+          "type": "array",
+          "items": {"type": "string"},
+          "description": "Japanese words that must be used in the sentence"
+        }
+      },
+      "required": ["sentence", "required_words"]
+    },
+    "evaluation": {
+      "type": "object",
+      "properties": {
+        "is_correct": {
+          "type": "boolean",
+          "description": "Whether the sentence is grammatically correct"
+        },
+        "grade": {
+          "type": "string",
+          "enum": ["good", "passing", "failure"],
+          "description": "Overall grade for the sentence"
+        },
+        "uses_required_words": {
+          "type": "boolean",
+          "description": "Whether the sentence uses all the required words"
+        },
+        "score": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 100,
+          "description": "Numerical score"
+        }
+      },
+      "required": ["is_correct", "grade", "uses_required_words"]
+    },
+    "language_analysis": {
+      "type": "object",
+      "properties": {
+        "translation": {
+          "type": "string",
+          "description": "English translation of the sentence"
+        },
+        "pronunciation": {
+          "type": "string",
+          "description": "Romanized pronunciation of the sentence"
+        },
+        "detected_issues": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "issue_type": {
+                "type": "string",
+                "enum": ["grammar", "vocabulary", "clarity", "natural_expression", "structure", "particle_usage", "conjugation", "word_form", "word_choice"],
+                "description": "Type of issue detected"
+              },
+              "description": {
+                "type": "string",
+                "description": "Description of the issue"
+              },
+              "severity": {
+                "type": "string",
+                "enum": ["minor", "moderate", "major"],
+                "description": "How severely this affects understanding"
+              }
+            },
+            "required": ["issue_type", "description"]
+          }
+        },
+        "required_words_usage": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "word": {
+                "type": "string",
+                "description": "The required word"
+              },
+              "used_form": {
+                "type": "string",
+                "description": "The form of the word as used in the sentence"
+              },
+              "correct_usage": {
+                "type": "boolean",
+                "description": "Whether the word was used correctly"
+              },
+              "notes": {
+                "type": "string",
+                "description": "Notes about usage of this word"
+              }
+            },
+            "required": ["word", "used_form", "correct_usage"]
+          }
+        }
+      },
+      "required": ["translation", "pronunciation"]
+    },
+    "feedback": {
+      "type": "object",
+      "properties": {
+        "summary": {
+          "type": "string",
+          "description": "Overall feedback about the sentence"
+        },
+        "specific_points": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "description": "Specific feedback points"
+          }
+        },
+        "grammar_explanations": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "grammar_point": {
+                "type": "string",
+                "description": "The grammar point being explained"
+              },
+              "explanation": {
+                "type": "string",
+                "description": "Explanation of the grammar point"
+              },
+              "jlpt_level": {
+                "type": "string",
+                "enum": ["N5", "N4", "N3", "N2", "N1"],
+                "description": "JLPT level of this grammar point"
+              }
+            },
+            "required": ["grammar_point", "explanation"]
+          }
+        }
+      },
+      "required": ["summary"]
+    },
+    "suggestions": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "improved_sentence": {
+            "type": "string",
+            "description": "An improved version of the sentence"
+          },
+          "translation": {
+            "type": "string",
+            "description": "English translation of the improved sentence"
+          },
+          "explanation": {
+            "type": "string",
+            "description": "Explanation of the improvements made"
+          }
+        },
+        "required": ["improved_sentence", "translation"]
+      },
+      "description": "Suggested improvements to the sentence"
+    }
+  },
+  "required": ["request", "evaluation", "feedback"]
+}
+
+Here's an example of the expected JSON response format:
+
+{
+  "request": {
+    "sentence": "先生はよく選んだ。",
+    "required_words": ["選ぶ", "先生"]
+  },
+  "evaluation": {
+    "is_correct": true,
+    "grade": "passing",
+    "uses_required_words": true,
+    "score": 75
+  },
+  "language_analysis": {
+    "translation": "The teacher chose well.",
+    "pronunciation": "Sensei wa yoku eranda.",
+    "detected_issues": [
+      {
+        "issue_type": "clarity",
+        "description": "The sentence doesn't specify what was chosen, making the meaning ambiguous.",
+        "severity": "moderate"
+      },
+      {
+        "issue_type": "natural_expression",
+        "description": "Using よく with 選ぶ without an object feels incomplete to native speakers.",
+        "severity": "minor"
+      }
+    ],
+    "required_words_usage": [
+      {
+        "word": "先生",
+        "used_form": "先生",
+        "correct_usage": true,
+        "notes": "Used correctly as the subject/topic of the sentence."
+      },
+      {
+        "word": "選ぶ",
+        "used_form": "選んだ",
+        "correct_usage": true,
+        "notes": "Correctly conjugated to past tense form 選んだ."
+      }
+    ]
+  },
+  "feedback": {
+    "summary": "Your sentence is grammatically correct and uses both required words properly. However, it lacks clarity because it doesn't specify what was chosen.",
+    "specific_points": [
+      "The sentence structure is correct with a topic (先生) and verb (選んだ).",
+      "The verb 選ぶ is correctly conjugated to past tense form.",
+      "Without context, it's unclear what the teacher chose, making the sentence feel incomplete.",
+      "The adverb よく (well) is used correctly but would be more natural if what was being chosen was specified."
+    ],
+    "grammar_explanations": [
+      {
+        "grammar_point": "は as a topic marker",
+        "explanation": "は (wa) marks the topic of the sentence, in this case establishing 先生 (teacher) as what the sentence is about.",
+        "jlpt_level": "N5"
+      },
+      {
+        "grammar_point": "Verb past tense conjugation",
+        "explanation": "The verb 選ぶ (to choose) is conjugated to its past tense form 選んだ by changing the final う to ん and adding だ.",
+        "jlpt_level": "N5"
+      }
+    ]
+  },
+  "suggestions": [
+    {
+      "improved_sentence": "先生は良い本を選んだ。",
+      "translation": "The teacher chose a good book.",
+      "explanation": "Adding an object (本/book) clarifies what was chosen, making the sentence more complete and natural."
+    },
+    {
+      "improved_sentence": "私はいい先生を選びました。",
+      "translation": "I chose a good teacher.",
+      "explanation": "This alternative changes the role of 先生 from subject to object, providing a different way to use both required words naturally."
+    },
+    {
+      "improved_sentence": "先生は慎重に学生を選んだ。",
+      "translation": "The teacher carefully selected students.",
+      "explanation": "Using an adverb like 慎重に (carefully) instead of よく and adding an object creates a more specific and natural sentence."
+    }
+  ]
+}
+
+Japanese Sentence to evaluate:
+${sentence}
+
+Required words that must be used in the sentence:
+${JSON.stringify(requiredWords)}
+
+Check if all required words (or their conjugated forms) are used in the sentence. Be strict but also recognize verb conjugations, adjective forms, and other grammatical variations.
+
+Return ONLY the JSON object without any extra text or explanation.
+`;
+  };
+
+  // Render evaluation result
+  const renderEvaluationResult = () => {
+    if (!evaluationResult) return null;
+    
+    return (
+      <div className="mt-6 space-y-6">
+        <div className={`p-4 rounded-lg ${
+          evaluationResult.evaluation.grade === 'good' ? 'bg-green-100 dark:bg-green-900/20 border border-green-400 dark:border-green-600' :
+          evaluationResult.evaluation.grade === 'passing' ? 'bg-amber-100 dark:bg-amber-900/20 border border-amber-400 dark:border-amber-600' :
+          'bg-red-100 dark:bg-red-900/20 border border-red-400 dark:border-red-600'
+        }`}>
+          <div className="flex items-center justify-between mb-2">
+            <h3 className="font-medium text-lg">Evaluation Result</h3>
+            <div className="flex items-center gap-2">
+              {evaluationResult.evaluation.score && (
+                <span className="px-2 py-1 bg-background/60 rounded-md text-sm font-medium">
+                  Score: {evaluationResult.evaluation.score}/100
+                </span>
+              )}
+              <span className={`px-2 py-1 rounded-md text-sm font-medium ${
+                evaluationResult.evaluation.grade === 'good' ? 'bg-green-200 dark:bg-green-800/60 text-green-800 dark:text-green-200' :
+                evaluationResult.evaluation.grade === 'passing' ? 'bg-amber-200 dark:bg-amber-800/60 text-amber-800 dark:text-amber-200' :
+                'bg-red-200 dark:bg-red-800/60 text-red-800 dark:text-red-200'
+              }`}>
+                {evaluationResult.evaluation.grade === 'good' ? 'Good' :
+                 evaluationResult.evaluation.grade === 'passing' ? 'Passing' : 'Needs Work'}
+              </span>
+            </div>
+          </div>
+          
+          <p className="mb-3">{evaluationResult.feedback.summary}</p>
+          
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <div className="mb-3">
+                <h4 className="text-sm font-medium mb-1">Translation:</h4>
+                <p className="bg-background/40 p-2 rounded">{evaluationResult.language_analysis.translation}</p>
+              </div>
+              <div>
+                <h4 className="text-sm font-medium mb-1">Pronunciation:</h4>
+                <p className="bg-background/40 p-2 rounded">{evaluationResult.language_analysis.pronunciation}</p>
+              </div>
+            </div>
+            
+            <div>
+              <h4 className="text-sm font-medium mb-1">Required Words Usage:</h4>
+              <div className="space-y-2">
+                {evaluationResult.language_analysis.required_words_usage?.map((wordUsage, index) => (
+                  <div key={index} className={`p-2 rounded ${
+                    wordUsage.correct_usage ? 'bg-green-100/50 dark:bg-green-900/10' : 'bg-red-100/50 dark:bg-red-900/10'
+                  }`}>
+                    <div className="flex items-center gap-1.5">
+                      {wordUsage.correct_usage ? 
+                        <Check className="h-4 w-4 text-green-600 dark:text-green-400" /> : 
+                        <X className="h-4 w-4 text-red-600 dark:text-red-400" />
+                      }
+                      <span className="font-medium">{wordUsage.word}</span>
+                      <span className="text-muted-foreground text-sm">→</span>
+                      <span>{wordUsage.used_form}</span>
+                    </div>
+                    {wordUsage.notes && <p className="text-sm mt-1">{wordUsage.notes}</p>}
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+          
+          {evaluationResult.language_analysis.detected_issues && evaluationResult.language_analysis.detected_issues.length > 0 && (
+            <div className="mt-4">
+              <h4 className="text-sm font-medium mb-2">Identified Issues:</h4>
+              <div className="space-y-2">
+                {evaluationResult.language_analysis.detected_issues.map((issue, index) => (
+                  <div key={index} className={`p-2 rounded ${
+                    issue.severity === 'minor' ? 'bg-blue-100/50 dark:bg-blue-900/10' :
+                    issue.severity === 'moderate' ? 'bg-amber-100/50 dark:bg-amber-900/10' :
+                    'bg-red-100/50 dark:bg-red-900/10'
+                  }`}>
+                    <div className="flex items-center gap-1.5">
+                      <span className={`text-xs font-medium px-1.5 py-0.5 rounded ${
+                        issue.severity === 'minor' ? 'bg-blue-200 dark:bg-blue-800/60' :
+                        issue.severity === 'moderate' ? 'bg-amber-200 dark:bg-amber-800/60' :
+                        'bg-red-200 dark:bg-red-800/60'
+                      }`}>
+                        {issue.issue_type}
+                      </span>
+                      <span className="text-xs text-muted-foreground">
+                        {issue.severity && `(${issue.severity})`}
+                      </span>
+                    </div>
+                    <p className="text-sm mt-1">{issue.description}</p>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
+        
+        {evaluationResult.suggestions && evaluationResult.suggestions.length > 0 && (
+          <div className="p-4 rounded-lg bg-card border shadow-sm">
+            <h3 className="font-medium text-lg mb-3">Suggested Improvements</h3>
+            <div className="space-y-4">
+              {evaluationResult.suggestions.map((suggestion, index) => (
+                <div key={index} className="p-3 rounded-md bg-muted/40 border">
+                  <p className="font-medium">{suggestion.improved_sentence}</p>
+                  <p className="text-sm text-muted-foreground mt-1">{suggestion.translation}</p>
+                  {suggestion.explanation && (
+                    <p className="text-sm mt-2 bg-background/40 p-2 rounded">{suggestion.explanation}</p>
+                  )}
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+        
+        {evaluationResult.feedback.grammar_explanations && evaluationResult.feedback.grammar_explanations.length > 0 && (
+          <div className="p-4 rounded-lg bg-card border shadow-sm">
+            <h3 className="font-medium text-lg mb-3">Grammar Explanations</h3>
+            <div className="space-y-3">
+              {evaluationResult.feedback.grammar_explanations.map((grammarPoint, index) => (
+                <div key={index} className="p-3 rounded-md bg-muted/40 border">
+                  <div className="flex items-center gap-2 mb-1">
+                    <h4 className="font-medium">{grammarPoint.grammar_point}</h4>
+                    {grammarPoint.jlpt_level && (
+                      <span className="text-xs font-medium px-1.5 py-0.5 rounded bg-primary/20 text-primary-foreground">
+                        JLPT {grammarPoint.jlpt_level}
+                      </span>
+                    )}
+                  </div>
+                  <p className="text-sm">{grammarPoint.explanation}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+      </div>
+    );
   };
 
   if (loading) {
@@ -522,7 +1062,7 @@ export default function PracticePage() {
           Back to Deck
         </Button>
         
-        <Button onClick={openSettings} variant="outline" size="icon">
+        <Button onClick={() => setShowSettings(true)} variant="outline" size="icon">
           <Settings className="h-5 w-5" />
         </Button>
       </div>
@@ -746,10 +1286,20 @@ export default function PracticePage() {
                     />
                     
                     <div className="flex justify-end">
-                      <Button onClick={handleSubmitAnswer}>Submit</Button>
+                      <Button 
+                        onClick={handleSubmitAnswer}
+                        disabled={!submittedAnswer.trim() || evaluationLoading}
+                      >
+                        {evaluationLoading ? (
+                          <>
+                            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                            Evaluating...
+                          </>
+                        ) : 'Submit'}
+                      </Button>
                     </div>
                     
-                    {isAnswerCorrect !== null && (
+                    {isAnswerCorrect !== null && !evaluationResult && !evaluationLoading && (
                       <div className={`p-4 rounded-lg flex items-center gap-2 ${
                         isAnswerCorrect ? "bg-green-100 dark:bg-green-900/20 text-green-700 dark:text-green-400" : "bg-red-100 dark:bg-red-900/20 text-red-700 dark:text-red-400"
                       }`}>
@@ -766,6 +1316,8 @@ export default function PracticePage() {
                         )}
                       </div>
                     )}
+                    
+                    {evaluationResult && renderEvaluationResult()}
                   </div>
                 </div>
               )}
