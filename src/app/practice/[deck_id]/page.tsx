@@ -589,28 +589,61 @@ export default function PracticePage() {
       const jsonMatch = textResponse.match(/```json\n([\s\S]*?)\n```/) || 
                       textResponse.match(/{[\s\S]*}/);
                      
-      let evaluationData: SentenceEvaluation;
+      let evaluationData: SentenceEvaluation | null = null;
       
       if (jsonMatch) {
         // If we found JSON in markdown format or plain format
-        const jsonString = jsonMatch[1] || jsonMatch[0];
-        evaluationData = JSON.parse(jsonString);
+        try {
+          const jsonString = jsonMatch[1] || jsonMatch[0];
+          evaluationData = JSON.parse(jsonString);
+        } catch (e) {
+          console.error("Failed to parse JSON from response:", e);
+          throw new Error("Could not parse evaluation data");
+        }
       } else {
         // Try to parse the entire response as JSON
         try {
           evaluationData = JSON.parse(textResponse);
         } catch (e) {
-          // If not valid JSON, create a minimal result
+          console.error("Failed to parse response as JSON:", e);
           throw new Error("Invalid response format from API");
         }
       }
       
+      // Validate the structure of the response
+      if (!evaluationData || !evaluationData.evaluation) {
+        throw new Error("Evaluation data missing required structure");
+      }
+      
       setEvaluationResult(evaluationData);
-      setIsAnswerCorrect(evaluationData.evaluation.uses_required_words && evaluationData.evaluation.is_correct);
+      
+      // Safely access properties
+      const usesRequiredWords = evaluationData.evaluation.uses_required_words === true;
+      const isCorrect = evaluationData.evaluation.is_correct === true;
+      setIsAnswerCorrect(usesRequiredWords && isCorrect);
       
     } catch (err: any) {
       console.error("Error evaluating sentence:", err);
       setIsAnswerCorrect(false);
+      // Create a minimal error result to display to the user
+      setEvaluationResult({
+        request: {
+          sentence: submittedAnswer,
+          required_words: practiceWords.map(word => word[FIELD_INDICES.spelling])
+        },
+        evaluation: {
+          is_correct: false,
+          grade: "failure",
+          uses_required_words: false
+        },
+        language_analysis: {
+          translation: "",
+          pronunciation: ""
+        },
+        feedback: {
+          summary: `Unable to evaluate your sentence. ${err.message || "Please try again later."}`
+        }
+      });
     } finally {
       setEvaluationLoading(false);
     }
@@ -895,74 +928,87 @@ Return ONLY the JSON object without any extra text or explanation.
   const renderEvaluationResult = () => {
     if (!evaluationResult) return null;
     
+    // Safely access properties with fallbacks to prevent crashes
+    const grade = evaluationResult.evaluation?.grade || "failure";
+    const score = evaluationResult.evaluation?.score;
+    const summary = evaluationResult.feedback?.summary || "Unable to provide feedback";
+    const translation = evaluationResult.language_analysis?.translation || "";
+    const pronunciation = evaluationResult.language_analysis?.pronunciation || "";
+    const wordUsage = evaluationResult.language_analysis?.required_words_usage || [];
+    const detectedIssues = evaluationResult.language_analysis?.detected_issues || [];
+    const suggestions = evaluationResult.suggestions || [];
+    const grammarExplanations = evaluationResult.feedback?.grammar_explanations || [];
+    
     return (
       <div className="mt-6 space-y-6">
         <div className={`p-4 rounded-lg ${
-          evaluationResult.evaluation.grade === 'good' ? 'bg-green-100 dark:bg-green-900/20 border border-green-400 dark:border-green-600' :
-          evaluationResult.evaluation.grade === 'passing' ? 'bg-amber-100 dark:bg-amber-900/20 border border-amber-400 dark:border-amber-600' :
+          grade === 'good' ? 'bg-green-100 dark:bg-green-900/20 border border-green-400 dark:border-green-600' :
+          grade === 'passing' ? 'bg-amber-100 dark:bg-amber-900/20 border border-amber-400 dark:border-amber-600' :
           'bg-red-100 dark:bg-red-900/20 border border-red-400 dark:border-red-600'
         }`}>
           <div className="flex items-center justify-between mb-2">
             <h3 className="font-medium text-lg">Evaluation Result</h3>
             <div className="flex items-center gap-2">
-              {evaluationResult.evaluation.score && (
+              {score !== undefined && (
                 <span className="px-2 py-1 bg-background/60 rounded-md text-sm font-medium">
-                  Score: {evaluationResult.evaluation.score}/100
+                  Score: {score}/100
                 </span>
               )}
               <span className={`px-2 py-1 rounded-md text-sm font-medium ${
-                evaluationResult.evaluation.grade === 'good' ? 'bg-green-200 dark:bg-green-800/60 text-green-800 dark:text-green-200' :
-                evaluationResult.evaluation.grade === 'passing' ? 'bg-amber-200 dark:bg-amber-800/60 text-amber-800 dark:text-amber-200' :
+                grade === 'good' ? 'bg-green-200 dark:bg-green-800/60 text-green-800 dark:text-green-200' :
+                grade === 'passing' ? 'bg-amber-200 dark:bg-amber-800/60 text-amber-800 dark:text-amber-200' :
                 'bg-red-200 dark:bg-red-800/60 text-red-800 dark:text-red-200'
               }`}>
-                {evaluationResult.evaluation.grade === 'good' ? 'Good' :
-                 evaluationResult.evaluation.grade === 'passing' ? 'Passing' : 'Needs Work'}
+                {grade === 'good' ? 'Good' :
+                 grade === 'passing' ? 'Passing' : 'Needs Work'}
               </span>
             </div>
           </div>
           
-          <p className="mb-3">{evaluationResult.feedback.summary}</p>
+          <p className="mb-3">{summary}</p>
           
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
               <div className="mb-3">
                 <h4 className="text-sm font-medium mb-1">Translation:</h4>
-                <p className="bg-background/40 p-2 rounded">{evaluationResult.language_analysis.translation}</p>
+                <p className="bg-background/40 p-2 rounded">{translation}</p>
               </div>
               <div>
                 <h4 className="text-sm font-medium mb-1">Pronunciation:</h4>
-                <p className="bg-background/40 p-2 rounded">{evaluationResult.language_analysis.pronunciation}</p>
+                <p className="bg-background/40 p-2 rounded">{pronunciation}</p>
               </div>
             </div>
             
-            <div>
-              <h4 className="text-sm font-medium mb-1">Required Words Usage:</h4>
-              <div className="space-y-2">
-                {evaluationResult.language_analysis.required_words_usage?.map((wordUsage, index) => (
-                  <div key={index} className={`p-2 rounded ${
-                    wordUsage.correct_usage ? 'bg-green-100/50 dark:bg-green-900/10' : 'bg-red-100/50 dark:bg-red-900/10'
-                  }`}>
-                    <div className="flex items-center gap-1.5">
-                      {wordUsage.correct_usage ? 
-                        <Check className="h-4 w-4 text-green-600 dark:text-green-400" /> : 
-                        <X className="h-4 w-4 text-red-600 dark:text-red-400" />
-                      }
-                      <span className="font-medium">{wordUsage.word}</span>
-                      <span className="text-muted-foreground text-sm">→</span>
-                      <span>{wordUsage.used_form}</span>
+            {wordUsage.length > 0 && (
+              <div>
+                <h4 className="text-sm font-medium mb-1">Required Words Usage:</h4>
+                <div className="space-y-2">
+                  {wordUsage.map((wordUsage, index) => (
+                    <div key={index} className={`p-2 rounded ${
+                      wordUsage.correct_usage ? 'bg-green-100/50 dark:bg-green-900/10' : 'bg-red-100/50 dark:bg-red-900/10'
+                    }`}>
+                      <div className="flex items-center gap-1.5">
+                        {wordUsage.correct_usage ? 
+                          <Check className="h-4 w-4 text-green-600 dark:text-green-400" /> : 
+                          <X className="h-4 w-4 text-red-600 dark:text-red-400" />
+                        }
+                        <span className="font-medium">{wordUsage.word}</span>
+                        <span className="text-muted-foreground text-sm">→</span>
+                        <span>{wordUsage.used_form}</span>
+                      </div>
+                      {wordUsage.notes && <p className="text-sm mt-1">{wordUsage.notes}</p>}
                     </div>
-                    {wordUsage.notes && <p className="text-sm mt-1">{wordUsage.notes}</p>}
-                  </div>
-                ))}
+                  ))}
+                </div>
               </div>
-            </div>
+            )}
           </div>
           
-          {evaluationResult.language_analysis.detected_issues && evaluationResult.language_analysis.detected_issues.length > 0 && (
+          {detectedIssues.length > 0 && (
             <div className="mt-4">
               <h4 className="text-sm font-medium mb-2">Identified Issues:</h4>
               <div className="space-y-2">
-                {evaluationResult.language_analysis.detected_issues.map((issue, index) => (
+                {detectedIssues.map((issue, index) => (
                   <div key={index} className={`p-2 rounded ${
                     issue.severity === 'minor' ? 'bg-blue-100/50 dark:bg-blue-900/10' :
                     issue.severity === 'moderate' ? 'bg-amber-100/50 dark:bg-amber-900/10' :
@@ -988,11 +1034,11 @@ Return ONLY the JSON object without any extra text or explanation.
           )}
         </div>
         
-        {evaluationResult.suggestions && evaluationResult.suggestions.length > 0 && (
+        {suggestions.length > 0 && (
           <div className="p-4 rounded-lg bg-card border shadow-sm">
             <h3 className="font-medium text-lg mb-3">Suggested Improvements</h3>
             <div className="space-y-4">
-              {evaluationResult.suggestions.map((suggestion, index) => (
+              {suggestions.map((suggestion, index) => (
                 <div key={index} className="p-3 rounded-md bg-muted/40 border">
                   <p className="font-medium">{suggestion.improved_sentence}</p>
                   <p className="text-sm text-muted-foreground mt-1">{suggestion.translation}</p>
@@ -1005,11 +1051,11 @@ Return ONLY the JSON object without any extra text or explanation.
           </div>
         )}
         
-        {evaluationResult.feedback.grammar_explanations && evaluationResult.feedback.grammar_explanations.length > 0 && (
+        {grammarExplanations.length > 0 && (
           <div className="p-4 rounded-lg bg-card border shadow-sm">
             <h3 className="font-medium text-lg mb-3">Grammar Explanations</h3>
             <div className="space-y-3">
-              {evaluationResult.feedback.grammar_explanations.map((grammarPoint, index) => (
+              {grammarExplanations.map((grammarPoint, index) => (
                 <div key={index} className="p-3 rounded-md bg-muted/40 border">
                   <div className="flex items-center gap-2 mb-1">
                     <h4 className="font-medium">{grammarPoint.grammar_point}</h4>

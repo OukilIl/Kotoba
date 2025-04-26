@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { Moon, Sun } from "lucide-react";
+import { Moon, Sun, Github } from "lucide-react";
 import { useTheme } from "next-themes";
 import Link from "next/link";
 
@@ -57,20 +57,32 @@ export default function Menu() {
           </li>
         </ul>
         
-        {mounted && (
-          <Button 
-            variant="ghost" 
-            size="icon" 
-            onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
-            className="ml-auto"
-          >
-            {theme === "dark" ? (
-              <Sun className="h-[1.2rem] w-[1.2rem] rotate-0 scale-100 transition-all" />
-            ) : (
-              <Moon className="h-[1.2rem] w-[1.2rem] rotate-0 scale-100 transition-all" />
-            )}
-          </Button>
-        )}
+        <div className="flex items-center gap-2">
+          {mounted && (
+            <>
+              <Link href="https://github.com/OukilIl/Kotoba?tab=readme-ov-file" target="_blank" rel="noopener noreferrer">
+                <Button 
+                  variant="ghost" 
+                  size="icon"
+                  className="mr-2"
+                >
+                  <Github className="h-[1.2rem] w-[1.2rem]" />
+                </Button>
+              </Link>
+              <Button 
+                variant="ghost" 
+                size="icon" 
+                onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
+              >
+                {theme === "dark" ? (
+                  <Sun className="h-[1.2rem] w-[1.2rem] rotate-0 scale-100 transition-all" />
+                ) : (
+                  <Moon className="h-[1.2rem] w-[1.2rem] rotate-0 scale-100 transition-all" />
+                )}
+              </Button>
+            </>
+          )}
+        </div>
       </div>
     </nav>
   );
