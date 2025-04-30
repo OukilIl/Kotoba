@@ -1337,7 +1337,7 @@ Return ONLY the JSON object without any extra text or explanation.
                       value={submittedAnswer}
                       onChange={(e) => setSubmittedAnswer(e.target.value)}
                       onKeyDown={(e) => {
-                        if (e.key === 'Enter' && e.ctrlKey && submittedAnswer.trim() && !evaluationLoading) {
+                        if (e.key === 'Enter' && !e.shiftKey && submittedAnswer.trim() && !evaluationLoading) {
                           e.preventDefault();
                           handleSubmitAnswer();
                         }
