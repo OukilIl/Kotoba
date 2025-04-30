@@ -1336,6 +1336,12 @@ Return ONLY the JSON object without any extra text or explanation.
                       className="min-h-32"
                       value={submittedAnswer}
                       onChange={(e) => setSubmittedAnswer(e.target.value)}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter' && e.ctrlKey && submittedAnswer.trim() && !evaluationLoading) {
+                          e.preventDefault();
+                          handleSubmitAnswer();
+                        }
+                      }}
                     />
                     
                     <div className="flex justify-end">

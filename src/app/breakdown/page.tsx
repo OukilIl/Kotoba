@@ -1073,6 +1073,12 @@ Return ONLY the JSON object without any extra text or explanation.
               <textarea
                 value={japaneseText}
                 onChange={(e) => setJapaneseText(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' && !e.shiftKey && japaneseText.trim() && !processingBreakdown) {
+                    e.preventDefault();
+                    handleBreakdown();
+                  }
+                }}
                 placeholder="Enter Japanese text here..."
                 className="w-full min-h-[120px] p-4 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary/50 transition-all bg-background/50"
               />
